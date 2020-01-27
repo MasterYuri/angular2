@@ -37,7 +37,7 @@ export class UsersService {
     this.authService.deleteToken();
   }
 
-  getUserIdByToken(token: string) {
+  getUserIdByToken(token: string): Observable<String> {
     return this.http.post<IApiAnswer>(`${this.ROOT_URL}get_user_id_by_token.php`, {token}).pipe(
       map(data => {
         let ret: number = null;
@@ -62,14 +62,14 @@ export class UsersService {
   }
 
   getCurrentUser(): Observable<IUser> {
-    this.authService.token$.subscribe(
-      token => {
-        this.getUserIdByToken(token).subscribe(
-          userId => {
-            return this.getUserById(userId);
-          }
-        );
-      }
+    return this.authService.token$.pipe(
+      take(1), 
+      flatMap(token => {
+        return this.getUserIdByToken(token);
+      }),
+      flatMap(userId => {
+        return this.getUserById(userId);
+      })
     );
   }
 }
