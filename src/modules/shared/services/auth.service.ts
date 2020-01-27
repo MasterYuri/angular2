@@ -1,17 +1,31 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable()
 export class AuthService {
+
+  private tokenSubject: BehaviorSubject<string>;
+
+  constructor() {
+    this.tokenSubject = new BehaviorSubject(this.getTokenFromStorage());
+  }
+
+  get token$(): Observable<string> {
+    return this.tokenSubject.asObservable();
+  }
+
   get token(): string {
-    return localStorage.getItem('_authToken');
+    return this.tokenSubject.getValue(); // Можно и this.getTokenFromStorage(), без разницы
   }
 
   set token(token: string) {
-    localStorage.setItem('_authToken', token);
+    this.saveTokenToStorage(token);
+    this.tokenSubject.next(token);
   }
 
   deleteToken(): void {
-    localStorage.removeItem('_authToken');
+    this.deleteTokenFromStorage();
+    this.tokenSubject.next(null);
   }
 
   isAuth(): boolean {
@@ -19,6 +33,18 @@ export class AuthService {
   }
 
   isTokenExpired(): boolean {
-    return false;
+    return false; // TODO
+  }
+
+  private getTokenFromStorage(): string {
+    return localStorage.getItem('_authToken');
+  }
+
+  private saveTokenToStorage(token: string): void {
+    localStorage.setItem('_authToken', token);
+  }
+
+  private deleteTokenFromStorage(): void {
+    localStorage.removeItem('_authToken');
   }
 }
